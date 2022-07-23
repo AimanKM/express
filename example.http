@@ -1,0 +1,12 @@
+# GET http://localhost:5000/
+
+POST http://localhost:5000/api/users/add HTTP/1.1
+content-type: application/json
+access-token: CWTrNiBwIxNlV6NOZQq6
+
+{
+    "email": "aimanrrrr@gmail.com",
+    "password": "mom123",
+    "password_confirm": "mom123",
+    "display_name": "Aiman"
+}
