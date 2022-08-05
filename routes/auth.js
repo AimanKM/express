@@ -1,4 +1,5 @@
 const express = require("express");
+const { objectRemoveEmpty } = require("../helpers/function");
 const { db, checkAuth } = require("../firebase/helpers");
 const { isEmpty } = require('lodash');
 const routes = express.Router();
@@ -49,16 +50,29 @@ routes.get("/git_user",
             res.status(200).json({
               user: {
                 role: docUser.data()?.role,
+                mode: docUser.data()?.mode,
                 email: docUser.data()?.email,
                 photoURL: docUser.data()?.photoURL,
                 display_name: docUser.data()?.display_name,
               },
             });
           });
-      })
-      .catch((error) =>
-        res.status(500).json({ code: error, message: "Internal Server Error" })
-      );
+      }).catch((error) => res.status(500).json({ code: error, message: "Internal Server Error" }));
+  }
+);
+
+routes.post("/update_user",
+  (req, res, next) => checkAuth(req, res, next),
+  (req, res) => {
+    const accessToken = req.headers["access-token"];
+    const { email, display_name, mode } = req.body;
+    db.collection("access").doc(accessToken).get()
+      .then((doc) => {
+        db.collection("users").doc(doc.data().userId)
+          .update(objectRemoveEmpty({email, display_name, mode}))
+          .then(() => res.status(200).send({ message: "User update successfully" }))
+          .catch(() => res.status(400).send({ message: "Error User update" }));
+      }).catch((error) => res.status(500).json({ code: error, message: "Internal Server Error" }));
   }
 );
 

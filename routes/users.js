@@ -46,13 +46,13 @@ routes.post("/add",
         if (isEmpty(snap.docs)) {
           const userData = {
             email,
+            mode: 'light',
             password,
             display_name,
             photoURL: "",
             role: 1,
           };
-          usersDb
-            .add(userData)
+          usersDb.add(userData)
             .then(({ id }) => res.status(200).json({ message: "Successfully create a user", userId: id }))
             .catch((error) => res.status(500).json({ code: error, message: "Internal Server Error" }));
         } else {
@@ -62,12 +62,48 @@ routes.post("/add",
   }
 );
 
+routes.delete("/delete",
+  (req, res, next) => checkAuth(req, res, next),
+  (req, res) => {
+    const userId = req.query.userId;
+    if (!userId) {
+      return res.status(400).send({ message: "Error: No User found" });
+    }
+  
+    const docUser = db.collection("users").doc(userId);
+    docUser.get().then((doc) => {
+        if (!doc.data()) {
+          return res.status(400).send({ message: "Error: No User found" });
+        }
+  
+        docUser.delete().then(() =>
+            res.status(200).send({ message: "User removed successfully" })
+          ).catch(() =>res.status(400).send({ message: "Error removing user" }));
+      }).catch(() => res.status(400).send({ message: "Internal Server Error" }));
+  }
+);
+
+routes.post("/update_user",
+  (req, res, next) => checkAuth(req, res, next),
+  (req, res) => {
+    const { email, display_name, userId } = req.body;
+    if (userId) {
+      db.collection("users")
+      .doc(userId)
+      .update({ email, display_name })
+      .then(() => res.status(200).send({ message: "User update successfully" }))
+      .catch(() => res.status(400).send({ message: "Error User update" }));
+    }else{
+      res.status(400).send({ message: "Error User No found" })
+    }
+  }
+);
+
 const upload = multer({
   storage: multer.memoryStorage(),
 });
 
-routes.post(
-  "/upload_profile",
+routes.post("/upload_profile",
   (req, res, next) => checkAuth(req, res, next),
   upload.single("file"),
   (req, res) => {
@@ -99,25 +135,5 @@ routes.post(
   }
 );
 
-routes.delete("/delete",
-  (req, res, next) => checkAuth(req, res, next),
-  (req, res) => {
-    const userId = req.query.userId;
-    if (!userId) {
-      return res.status(400).send({ message: "Error: No User found" });
-    }
-  
-    const docUser = db.collection("users").doc(userId);
-    docUser.get().then((doc) => {
-        if (!doc.data()) {
-          return res.status(400).send({ message: "Error: No User found" });
-        }
-  
-        docUser.delete().then(() =>
-            res.status(200).send({ message: "User removed successfully" })
-          ).catch(() =>res.status(400).send({ message: "Error removing user" }));
-      }).catch(() => res.status(400).send({ message: "Internal Server Error" }));
-  }
-);
 
 module.exports = routes;
