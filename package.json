@@ -23,6 +23,6 @@
     "uuid-v4": "^0.1.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.16"
+    "nodemon": "^3.1.13"
   }
 }
